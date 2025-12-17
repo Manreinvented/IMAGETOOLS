@@ -2,35 +2,41 @@ import streamlit as st
 import math
 from datetime import datetime, timedelta
 from fpdf import FPDF
+import pytz  # New library for timezone support
 import io
 
 # --- Constants ---
 HALF_LIFE_HOURS = 13.2235
 DECAY_CONSTANT_LAMBDA = math.log(2) / HALF_LIFE_HOURS
 
+# --- Timezone Helper ---
+def get_pst_now():
+    """Returns the current time in US/Pacific."""
+    tz = pytz.timezone('US/Pacific')
+    return datetime.now(tz)
+
 # --- Session State Initialization ---
 if 't0_dt' not in st.session_state:
-    st.session_state.t0_dt = datetime.now()
+    st.session_state.t0_dt = get_pst_now()
 if 't4_dt' not in st.session_state:
-    st.session_state.t4_dt = datetime.now() + timedelta(hours=4)
+    st.session_state.t4_dt = get_pst_now() + timedelta(hours=4)
 if 't24_dt' not in st.session_state:
-    st.session_state.t24_dt = datetime.now() + timedelta(hours=24)
+    st.session_state.t24_dt = get_pst_now() + timedelta(hours=24)
 
-# Functions to update state without causing API Errors
+# Functions to update state
 def update_t0():
-    st.session_state.t0_dt = datetime.now()
+    st.session_state.t0_dt = get_pst_now()
 
 def update_t4():
-    st.session_state.t4_dt = datetime.now()
+    st.session_state.t4_dt = get_pst_now()
 
 def update_t24():
-    st.session_state.t24_dt = datetime.now()
+    st.session_state.t24_dt = get_pst_now()
 
 def clear_all():
-    st.session_state.t0_dt = datetime.now()
-    st.session_state.t4_dt = datetime.now() + timedelta(hours=4)
-    st.session_state.t24_dt = datetime.now() + timedelta(hours=24)
-    # Clear text inputs manually if needed, or just refresh
+    st.session_state.t0_dt = get_pst_now()
+    st.session_state.t4_dt = get_pst_now() + timedelta(hours=4)
+    st.session_state.t24_dt = get_pst_now() + timedelta(hours=24)
     st.rerun()
 
 # --- PDF Generation Function ---
@@ -62,7 +68,8 @@ def create_pdf(results_text, p_info):
     pdf.cell(45, 10, "Technologist:", ln=False)
     pdf.cell(0, 10, "____________________", ln=True)
     pdf.cell(45, 10, "Date:", ln=False)
-    pdf.cell(0, 10, f"{datetime.now().strftime('%Y-%m-%d')}", ln=True)
+    # Ensure PDF footer also uses PST
+    pdf.cell(0, 10, f"{get_pst_now().strftime('%Y-%m-%d')}", ln=True)
     
     return pdf.output(dest='S').encode('latin-1')
 
